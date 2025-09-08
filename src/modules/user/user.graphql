@@ -1,0 +1,54 @@
+"User entity"
+type User @entity {
+  "Unique User ID"
+  id: ID! @id
+  "Unique username"
+  username: String! @column
+  "Unique email"
+  email: String! @column
+  "User Password"
+  password: String! @column
+  "User active status"
+  isActive: Boolean! @column
+  "User creation date"
+  createdAt: String! @column
+  "User last update date"
+  updatedAt: String! @column
+}
+
+"Auth payload for login response"
+type AuthPayload {
+  "JWT token"
+  token: String!
+  "Authenticated user"
+  user: User!
+}
+
+input CreateUserInput {
+  username: String!
+  email: String!
+  password: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type Query {
+  user(id: ID!): User
+  allUsers: [User!]!
+  me: User
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User
+  updateUser(id: ID!, input: CreateUserInput!): User
+  deleteUser(id: ID!): Boolean
+  login(input: LoginInput!): AuthPayload!
+  register(input: CreateUserInput!): AuthPayload!
+}
+
+type Subscription {
+  userCreated: User
+}
