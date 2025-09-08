@@ -10,5 +10,9 @@ export const databaseConfig = registerAs('database', () => ({
    */
   fieldNamesMap: new Map<string, [string, string, string, boolean]>([
     [FieldNames.USERS, ['users', 'userIds', ModelNames.USER, false]],
+    [FieldNames.AUTHOR, ['author', 'authorId', ModelNames.USER, true]],
+    [FieldNames.CALCULATIONS, ['calculations', '_id', ModelNames.CALCULATION, false]],
+    [FieldNames.COMMUNICATION, ['communication', 'communicationId', ModelNames.COMMUNICATION, true]],
+    [FieldNames.PARENT_CALCULATION, ['parentCalculation', 'parentCalculationId', ModelNames.CALCULATION, true]],
   ]),
 }));

@@ -5,19 +5,22 @@ import {
   Query,
   Info,
   Subscription,
+  Context,
 } from '@nestjs/graphql';
 import { UserService } from './user.service';
 import {
   CreateUserInput,
+  LoginInput,
   QueryResolvers,
   MutationResolvers,
   MutationUpdateUserArgs,
   QueryUserArgs,
 } from 'src/generated/graphql';
 import { GraphQLResolveInfo } from 'graphql';
-import { Inject } from '@nestjs/common';
+import { Inject, UseGuards } from '@nestjs/common';
 import { PubSub } from 'graphql-subscriptions';
 import { PUB_SUB } from '../pub-sub/pub-sub.provider';
+import { GraphQLContext } from 'src/types/graphql-context';
 
 @Resolver()
 export class UserResolver implements QueryResolvers, MutationResolvers {
@@ -51,6 +54,23 @@ export class UserResolver implements QueryResolvers, MutationResolvers {
   @Mutation()
   deleteUser(@Args('id') id: string) {
     return this.userService.deleteUser(id);
+  }
+
+  @Mutation()
+  login(@Args('input') input: LoginInput) {
+    return this.userService.login(input);
+  }
+
+  @Mutation()
+  register(@Args('input') input: CreateUserInput) {
+    return this.userService.register(input);
+  }
+
+  @Query()
+  me(@Context() context: GraphQLContext) {
+    // This will be protected by auth guard
+    const userId = context.req.user?.id;
+    return this.userService.getUserProfile(userId);
   }
 
   @Subscription()

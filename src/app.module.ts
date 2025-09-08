@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
+import { CommunicationModule } from './modules/communication/communication.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -9,7 +10,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { gqlConfig } from './config/gql.config';
 import { appConfig } from './config/app.config';
 import { databaseConfig } from './config/database.config';
-import { RoleModule } from './modules/role/role.module';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { RoleModule } from './modules/role/role.module';
       inject: [ConfigService],
     }),
     UserModule,
-    RoleModule,
+    CommunicationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

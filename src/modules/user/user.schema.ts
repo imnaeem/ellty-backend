@@ -7,8 +7,8 @@ export const userDefinition: SchemaDefinition<UserDbObject> = {
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
+  createdAt: { type: String, default: () => new Date().toISOString() },
+  updatedAt: { type: String, default: () => new Date().toISOString() },
 };
 
 const UserSchema = createSchema<UserDbObject>(userDefinition, {

@@ -32,8 +32,6 @@ export class UserRepository {
     const graphQLQuery: Record<string, any> = graphqlFields(info);
     const projection = this.queryHelpers.getProjectionFromInfo(info);
 
-    console.log(graphQLQuery);
-    console.log(projection, info);
     return this.modelHelpers.allQueryPopulateVirtuals<User>(
       {},
       this.userModel,
@@ -54,5 +52,26 @@ export class UserRepository {
   async deleteUserById(id: string) {
     const result = await this.userModel.findByIdAndDelete(id).exec();
     return !!result;
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userModel.findOne({ email }).exec();
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    return this.userModel.findOne({ username }).exec();
+  }
+
+  async findByEmailOrUsername(emailOrUsername: string): Promise<User | null> {
+    return this.userModel.findOne({
+      $or: [
+        { email: emailOrUsername },
+        { username: emailOrUsername }
+      ]
+    }).exec();
+  }
+
+  async findById(id: string): Promise<User | null> {
+    return this.userModel.findById(id).exec();
   }
 }

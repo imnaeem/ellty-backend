@@ -1,0 +1,82 @@
+"Math operation enum"
+enum Operation {
+  ADD
+  SUBTRACT
+  MULTIPLY
+  DIVIDE
+}
+
+"Single calculation in a communication"
+type Calculation @entity {
+  "Unique calculation ID"
+  id: ID! @id
+  "Previous number (from parent calculation or starting number)"
+  leftOperand: Float! @column
+  "Operation to perform"
+  operation: Operation! @column
+  "Right operand (user input)"
+  rightOperand: Float! @column
+  "Result of the calculation"
+  result: Float! @column
+  "User who made this calculation"
+  author: User! @link @map(path: "authorId")
+  "Parent calculation (null for starting number)"
+  parentCalculationId: ID @column
+  "Communication this calculation belongs to"
+  communication: Communication! @link @map(path: "communicationId")
+  "When this calculation was created"
+  createdAt: String! @column
+}
+
+"Communication thread containing calculations"
+type Communication @entity {
+  "Unique communication ID"
+  id: ID! @id
+  "Starting number for this communication"
+  startingNumber: Float! @column
+  "User who started this communication"
+  author: User! @link @map(path: "authorId")
+  "Title/description of the communication"
+  title: String @column
+  "All calculations in this communication"
+  calculations: [Calculation!]! @link @map(path: "calculationIds")
+  "Latest result"
+  currentResult: Float! @column
+  "Total number of calculations"
+  calculationCount: Int! @column
+  "Number of unique participants"
+  participantCount: Int! @column
+  "When this communication was created"
+  createdAt: String! @column
+  "When this communication was last updated"
+  updatedAt: String! @column
+}
+
+input CreateCommunicationInput {
+  startingNumber: Float!
+  title: String
+}
+
+input AddCalculationInput {
+  communicationId: ID!
+  operation: Operation!
+  rightOperand: Float!
+  parentCalculationId: ID
+}
+
+type Query {
+  communication(id: ID!): Communication
+  allCommunications: [Communication!]!
+  communicationCalculations(communicationId: ID!): [Calculation!]!
+}
+
+type Mutation {
+  createCommunication(input: CreateCommunicationInput!): Communication!
+  addCalculation(input: AddCalculationInput!): Calculation!
+}
+
+type Subscription {
+  communicationCreated: Communication!
+  calculationAdded(communicationId: ID!): Calculation!
+  communicationUpdated(communicationId: ID!): Communication!
+}

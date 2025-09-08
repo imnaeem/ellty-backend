@@ -1,7 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { GraphQLResolveInfo } from 'graphql';
-import { CreateUserInput, User } from 'src/generated/graphql';
+import {
+  CreateUserInput,
+  User,
+  LoginInput,
+  AuthPayload,
+} from 'src/generated/graphql';
 import { UserRepository } from './user.repository';
+import { AuthService } from './auth.service';
 import { PubSub } from 'graphql-subscriptions';
 import { PUB_SUB } from '../pub-sub/pub-sub.provider';
 
@@ -9,6 +15,7 @@ import { PUB_SUB } from '../pub-sub/pub-sub.provider';
 export class UserService {
   constructor(
     private readonly repository: UserRepository,
+    private readonly authService: AuthService,
     @Inject(PUB_SUB) private readonly pubSub: PubSub,
   ) {}
 
@@ -32,5 +39,22 @@ export class UserService {
 
   async deleteUser(id: string): Promise<boolean> {
     return this.repository.deleteUserById(id);
+  }
+
+  // Auth-related methods delegated to AuthService
+  async login(input: LoginInput): Promise<AuthPayload> {
+    return this.authService.login(input);
+  }
+
+  async register(input: CreateUserInput): Promise<AuthPayload> {
+    return this.authService.register(input);
+  }
+
+  async validateUser(userId: string): Promise<User> {
+    return this.authService.validateUser(userId);
+  }
+
+  async getUserProfile(userId: string): Promise<User> {
+    return this.repository.findById(userId);
   }
 }

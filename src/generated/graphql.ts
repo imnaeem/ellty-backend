@@ -16,9 +16,73 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
-export type CreateRoleInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
+export type AddCalculationInput = {
+  communicationId: Scalars['ID']['input'];
+  operation: Operation;
+  parentCalculationId?: InputMaybe<Scalars['ID']['input']>;
+  rightOperand: Scalars['Float']['input'];
+};
+
+/** Auth payload for login response */
+export type AuthPayload = {
+  __typename?: 'AuthPayload';
+  /** JWT token */
+  token: Scalars['String']['output'];
+  /** Authenticated user */
+  user: User;
+};
+
+/** Single calculation in a communication */
+export type Calculation = {
+  __typename?: 'Calculation';
+  /** User who made this calculation */
+  author: User;
+  /** Communication this calculation belongs to */
+  communication: Communication;
+  /** When this calculation was created */
+  createdAt: Scalars['String']['output'];
+  /** Unique calculation ID */
+  id: Scalars['ID']['output'];
+  /** Previous number (from parent calculation or starting number) */
+  leftOperand: Scalars['Float']['output'];
+  /** Operation to perform */
+  operation: Operation;
+  /** Parent calculation (null for starting number) */
+  parentCalculationId?: Maybe<Scalars['ID']['output']>;
+  /** Result of the calculation */
+  result: Scalars['Float']['output'];
+  /** Right operand (user input) */
+  rightOperand: Scalars['Float']['output'];
+};
+
+/** Communication thread containing calculations */
+export type Communication = {
+  __typename?: 'Communication';
+  /** User who started this communication */
+  author: User;
+  /** Total number of calculations */
+  calculationCount: Scalars['Int']['output'];
+  /** All calculations in this communication */
+  calculations: Array<Calculation>;
+  /** When this communication was created */
+  createdAt: Scalars['String']['output'];
+  /** Latest result */
+  currentResult: Scalars['Float']['output'];
+  /** Unique communication ID */
+  id: Scalars['ID']['output'];
+  /** Number of unique participants */
+  participantCount: Scalars['Int']['output'];
+  /** Starting number for this communication */
+  startingNumber: Scalars['Float']['output'];
+  /** Title/description of the communication */
+  title?: Maybe<Scalars['String']['output']>;
+  /** When this communication was last updated */
+  updatedAt: Scalars['String']['output'];
+};
+
+export type CreateCommunicationInput = {
+  startingNumber: Scalars['Float']['input'];
+  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateUserInput = {
@@ -27,24 +91,30 @@ export type CreateUserInput = {
   username: Scalars['String']['input'];
 };
 
+export type LoginInput = {
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
-  addUsersToRole?: Maybe<Role>;
-  createRole?: Maybe<Role>;
+  addCalculation: Calculation;
+  createCommunication: Communication;
   createUser?: Maybe<User>;
   deleteUser?: Maybe<Scalars['Boolean']['output']>;
+  login: AuthPayload;
+  register: AuthPayload;
   updateUser?: Maybe<User>;
 };
 
 
-export type MutationAddUsersToRoleArgs = {
-  roleId: Scalars['ID']['input'];
-  userIds: Array<Scalars['ID']['input']>;
+export type MutationAddCalculationArgs = {
+  input: AddCalculationInput;
 };
 
 
-export type MutationCreateRoleArgs = {
-  input: CreateRoleInput;
+export type MutationCreateCommunicationArgs = {
+  input: CreateCommunicationInput;
 };
 
 
@@ -58,22 +128,47 @@ export type MutationDeleteUserArgs = {
 };
 
 
+export type MutationLoginArgs = {
+  input: LoginInput;
+};
+
+
+export type MutationRegisterArgs = {
+  input: CreateUserInput;
+};
+
+
 export type MutationUpdateUserArgs = {
   id: Scalars['ID']['input'];
   input: CreateUserInput;
 };
 
+/** Math operation enum */
+export enum Operation {
+  Add = 'ADD',
+  Divide = 'DIVIDE',
+  Multiply = 'MULTIPLY',
+  Subtract = 'SUBTRACT'
+}
+
 export type Query = {
   __typename?: 'Query';
-  allRoles: Array<Role>;
+  allCommunications: Array<Communication>;
   allUsers: Array<User>;
-  role?: Maybe<Role>;
+  communication?: Maybe<Communication>;
+  communicationCalculations: Array<Calculation>;
+  me?: Maybe<User>;
   user?: Maybe<User>;
 };
 
 
-export type QueryRoleArgs = {
+export type QueryCommunicationArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunicationCalculationsArgs = {
+  communicationId: Scalars['ID']['input'];
 };
 
 
@@ -81,37 +176,39 @@ export type QueryUserArgs = {
   id: Scalars['ID']['input'];
 };
 
-/** Role entity */
-export type Role = {
-  __typename?: 'Role';
-  /** Role creation date */
-  createdAt: Scalars['String']['output'];
-  /** Role description */
-  description?: Maybe<Scalars['String']['output']>;
-  /** Unique Role ID */
-  id: Scalars['ID']['output'];
-  /** Unique Role name */
-  name: Scalars['String']['output'];
-  /** Role last update date */
-  updatedAt: Scalars['String']['output'];
-  /** Users in the Role */
-  users: Array<User>;
-};
-
 export type Subscription = {
   __typename?: 'Subscription';
+  calculationAdded: Calculation;
+  communicationCreated: Communication;
+  communicationUpdated: Communication;
   userCreated?: Maybe<User>;
+};
+
+
+export type SubscriptionCalculationAddedArgs = {
+  communicationId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionCommunicationUpdatedArgs = {
+  communicationId: Scalars['ID']['input'];
 };
 
 /** User entity */
 export type User = {
   __typename?: 'User';
+  /** User creation date */
+  createdAt: Scalars['String']['output'];
   /** Unique email */
   email: Scalars['String']['output'];
   /** Unique User ID */
   id: Scalars['ID']['output'];
+  /** User active status */
+  isActive: Scalars['Boolean']['output'];
   /** User Password */
   password: Scalars['String']['output'];
+  /** User last update date */
+  updatedAt: Scalars['String']['output'];
   /** Unique username */
   username: Scalars['String']['output'];
 };
@@ -192,14 +289,21 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
-  CreateRoleInput: CreateRoleInput;
-  String: ResolverTypeWrapper<Scalars['String']['output']>;
-  CreateUserInput: CreateUserInput;
-  Mutation: ResolverTypeWrapper<{}>;
+  AddCalculationInput: AddCalculationInput;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
+  Float: ResolverTypeWrapper<Scalars['Float']['output']>;
+  AuthPayload: ResolverTypeWrapper<AuthPayload>;
+  String: ResolverTypeWrapper<Scalars['String']['output']>;
+  Calculation: ResolverTypeWrapper<Calculation>;
+  Communication: ResolverTypeWrapper<Communication>;
+  Int: ResolverTypeWrapper<Scalars['Int']['output']>;
+  CreateCommunicationInput: CreateCommunicationInput;
+  CreateUserInput: CreateUserInput;
+  LoginInput: LoginInput;
+  Mutation: ResolverTypeWrapper<{}>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
+  Operation: Operation;
   Query: ResolverTypeWrapper<{}>;
-  Role: ResolverTypeWrapper<Role>;
   Subscription: ResolverTypeWrapper<{}>;
   User: ResolverTypeWrapper<User>;
   AdditionalEntityFields: AdditionalEntityFields;
@@ -207,14 +311,20 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
-  CreateRoleInput: CreateRoleInput;
-  String: Scalars['String']['output'];
-  CreateUserInput: CreateUserInput;
-  Mutation: {};
+  AddCalculationInput: AddCalculationInput;
   ID: Scalars['ID']['output'];
+  Float: Scalars['Float']['output'];
+  AuthPayload: AuthPayload;
+  String: Scalars['String']['output'];
+  Calculation: Calculation;
+  Communication: Communication;
+  Int: Scalars['Int']['output'];
+  CreateCommunicationInput: CreateCommunicationInput;
+  CreateUserInput: CreateUserInput;
+  LoginInput: LoginInput;
+  Mutation: {};
   Boolean: Scalars['Boolean']['output'];
   Query: {};
-  Role: Role;
   Subscription: {};
   User: User;
   AdditionalEntityFields: AdditionalEntityFields;
@@ -267,47 +377,82 @@ export type MapDirectiveArgs = {
 
 export type MapDirectiveResolver<Result, Parent, ContextType = any, Args = MapDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
+export type AuthPayloadResolvers<ContextType = any, ParentType extends ResolversParentTypes['AuthPayload'] = ResolversParentTypes['AuthPayload']> = {
+  token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CalculationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Calculation'] = ResolversParentTypes['Calculation']> = {
+  author?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  communication?: Resolver<ResolversTypes['Communication'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  leftOperand?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  operation?: Resolver<ResolversTypes['Operation'], ParentType, ContextType>;
+  parentCalculationId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  result?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  rightOperand?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommunicationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Communication'] = ResolversParentTypes['Communication']> = {
+  author?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  calculationCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  calculations?: Resolver<Array<ResolversTypes['Calculation']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  currentResult?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  participantCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  startingNumber?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
-  addUsersToRole?: Resolver<Maybe<ResolversTypes['Role']>, ParentType, ContextType, RequireFields<MutationAddUsersToRoleArgs, 'roleId' | 'userIds'>>;
-  createRole?: Resolver<Maybe<ResolversTypes['Role']>, ParentType, ContextType, RequireFields<MutationCreateRoleArgs, 'input'>>;
+  addCalculation?: Resolver<ResolversTypes['Calculation'], ParentType, ContextType, RequireFields<MutationAddCalculationArgs, 'input'>>;
+  createCommunication?: Resolver<ResolversTypes['Communication'], ParentType, ContextType, RequireFields<MutationCreateCommunicationArgs, 'input'>>;
   createUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<MutationCreateUserArgs, 'input'>>;
   deleteUser?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationDeleteUserArgs, 'id'>>;
+  login?: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<MutationLoginArgs, 'input'>>;
+  register?: Resolver<ResolversTypes['AuthPayload'], ParentType, ContextType, RequireFields<MutationRegisterArgs, 'input'>>;
   updateUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<MutationUpdateUserArgs, 'id' | 'input'>>;
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  allRoles?: Resolver<Array<ResolversTypes['Role']>, ParentType, ContextType>;
+  allCommunications?: Resolver<Array<ResolversTypes['Communication']>, ParentType, ContextType>;
   allUsers?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
-  role?: Resolver<Maybe<ResolversTypes['Role']>, ParentType, ContextType, RequireFields<QueryRoleArgs, 'id'>>;
+  communication?: Resolver<Maybe<ResolversTypes['Communication']>, ParentType, ContextType, RequireFields<QueryCommunicationArgs, 'id'>>;
+  communicationCalculations?: Resolver<Array<ResolversTypes['Calculation']>, ParentType, ContextType, RequireFields<QueryCommunicationCalculationsArgs, 'communicationId'>>;
+  me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<QueryUserArgs, 'id'>>;
 };
 
-export type RoleResolvers<ContextType = any, ParentType extends ResolversParentTypes['Role'] = ResolversParentTypes['Role']> = {
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type SubscriptionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
+  calculationAdded?: SubscriptionResolver<ResolversTypes['Calculation'], "calculationAdded", ParentType, ContextType, RequireFields<SubscriptionCalculationAddedArgs, 'communicationId'>>;
+  communicationCreated?: SubscriptionResolver<ResolversTypes['Communication'], "communicationCreated", ParentType, ContextType>;
+  communicationUpdated?: SubscriptionResolver<ResolversTypes['Communication'], "communicationUpdated", ParentType, ContextType, RequireFields<SubscriptionCommunicationUpdatedArgs, 'communicationId'>>;
   userCreated?: SubscriptionResolver<Maybe<ResolversTypes['User']>, "userCreated", ParentType, ContextType>;
 };
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
+  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isActive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   password?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   username?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = any> = {
+  AuthPayload?: AuthPayloadResolvers<ContextType>;
+  Calculation?: CalculationResolvers<ContextType>;
+  Communication?: CommunicationResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
-  Role?: RoleResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
 };
@@ -324,18 +469,37 @@ export type DirectiveResolvers<ContextType = any> = {
 };
 
 import { Types } from 'mongoose';
-export type RoleDbObject = {
-  createdAt: Date,
-  description?: Maybe<string>,
+export type CalculationDbObject = {
+  authorId: UserDbObject['_id'],
+  communicationId: CommunicationDbObject['_id'],
+  createdAt: string,
   _id: Types.ObjectId,
-  name: string,
-  updatedAt: Date,
-  userIds: Array<UserDbObject['_id']>,
+  leftOperand: number,
+  operation: string,
+  parentCalculationId?: Maybe<string>,
+  result: number,
+  rightOperand: number,
+};
+
+export type CommunicationDbObject = {
+  authorId: UserDbObject['_id'],
+  calculationCount: number,
+  calculationIds: Array<CalculationDbObject['_id']>,
+  createdAt: string,
+  currentResult: number,
+  _id: Types.ObjectId,
+  participantCount: number,
+  startingNumber: number,
+  title?: Maybe<string>,
+  updatedAt: string,
 };
 
 export type UserDbObject = {
+  createdAt: string,
   email: string,
   _id: Types.ObjectId,
+  isActive: boolean,
   password: string,
+  updatedAt: string,
   username: string,
 };
