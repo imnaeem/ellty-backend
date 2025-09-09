@@ -85,20 +85,6 @@ export class ModelHelpers {
       .populate<PopulateFields>(this.getMongoosePopulateOptions(graphQLQuery))
       .exec();
 
-  readonly deletePopulateVirtuals = async <
-    DocumentType = any,
-    PopulateFields = object,
-  >(
-    query: any /**null/undefined query returns all documents (mongoose behaviours) */,
-    mongooseModel: Model<HydratedDocument<DocumentType>>,
-    graphQLQuery: Record<string, any>,
-    mongooseProjection?: string[],
-  ) =>
-    mongooseModel
-      .deleteMany(query, mongooseProjection)
-      .populate<PopulateFields>(this.getMongoosePopulateOptions(graphQLQuery))
-      .exec();
-
   readonly PopulateVirtual = async <
     DocumentType = any,
     PopulateFields = object,
