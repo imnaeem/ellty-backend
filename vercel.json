@@ -1,0 +1,14 @@
+{
+  "buildCommand": "yarn build",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "dist/**/*.graphql"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ]
+}
